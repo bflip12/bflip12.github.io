@@ -1,0 +1,1204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How to Build an Editable Spreadsheet with Glide Data Grid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+<style>
+  /* Shared design tokens for every portfolio page.
+     Injected by shared/build.py wherever a page source contains the TOKENS placeholder.
+     Change a value here, then rebuild every piece (see docs/pieces.md). */
+
+  :root {
+    /* grounds */
+    --paper: #FCFBF9;        /* page background */
+    --surface: #FFFFFF;      /* panels, cards, figures */
+    --sunk: #F4F2EF;         /* recessed: chips, toggle tracks */
+    --code-bg: #F4F2EF;      /* code blocks and inline code */
+    --hover: #F3F0EC;
+
+    /* ink */
+    --ink: #171514;
+    --ink-soft: #423D39;
+    --ink-muted: #6E6862;
+    --btn-ink: #FCFBF9;      /* text on --ink buttons */
+
+    /* rules */
+    --rule: #DFDAD3;
+    --rule-soft: #ECE8E2;
+    --rule-strong: #CFC9C1;
+
+    /* meaning */
+    --accent: #9E2A2B;       /* brand accent, also "wrong" / half-checked */
+    --accent-wash: #F7E9E7;
+    --on: #2F6B4F;           /* "correct" / checked */
+    --on-wash: #E4EFE8;
+
+    /* library look-alikes */
+    --antd-blue: #1890FF;
+    --cb-border: #BDB6AE;
+    --hit: #FCE7A6;          /* search match highlight */
+
+    /* code highlighting */
+    --hl-key: #8A2C6B;
+    --hl-str: #2F6B4F;
+    --hl-num: #9C5410;
+    --hl-com: #8A837B;
+    --hl-fn: #2B5490;
+    --hl-type: #9E2A2B;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --paper: #131211;
+      --surface: #1B1917;
+      --sunk: #1E1C1A;
+      --code-bg: #1E1C1A;
+      --hover: #25221F;
+      --ink: #EDE9E4;
+      --ink-soft: #C6BFB7;
+      --ink-muted: #948C83;
+      --btn-ink: #131211;
+      --rule: #302C29;
+      --rule-soft: #24211E;
+      --rule-strong: #45403B;
+      --accent: #E4837F;
+      --accent-wash: #3A1E1D;
+      --on: #7FC29B;
+      --on-wash: #1B2E24;
+      --antd-blue: #3C9AE8;
+      --cb-border: #5E5852;
+      --hit: #5A4715;
+      --hl-key: #DD9BC8;
+      --hl-str: #90CDA9;
+      --hl-num: #E5A76C;
+      --hl-com: #7E766E;
+      --hl-fn: #93B4E8;
+      --hl-type: #E4837F;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --paper: #131211;
+    --surface: #1B1917;
+    --sunk: #1E1C1A;
+    --code-bg: #1E1C1A;
+    --hover: #25221F;
+    --ink: #EDE9E4;
+    --ink-soft: #C6BFB7;
+    --ink-muted: #948C83;
+    --btn-ink: #131211;
+    --rule: #302C29;
+    --rule-soft: #24211E;
+    --rule-strong: #45403B;
+    --accent: #E4837F;
+    --accent-wash: #3A1E1D;
+    --on: #7FC29B;
+    --on-wash: #1B2E24;
+    --antd-blue: #3C9AE8;
+    --cb-border: #5E5852;
+    --hit: #5A4715;
+    --hl-key: #DD9BC8;
+    --hl-str: #90CDA9;
+    --hl-num: #E5A76C;
+    --hl-com: #7E766E;
+    --hl-fn: #93B4E8;
+    --hl-type: #E4837F;
+  }
+
+
+  :root { --measure: 68ch; }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Source Sans 3", -apple-system, "Segoe UI", sans-serif;
+    font-size: 1.125rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 76ch;
+    margin: 0 auto;
+    padding-inline: 24px;
+    padding-block: 0 96px;
+  }
+
+  .measure { max-width: var(--measure); }
+
+  h1, h2 { font-family: "Fraunces", Georgia, serif; }
+
+  h1 {
+    font-size: clamp(2.1rem, 5.6vw, 3rem);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+    margin: 0 0 18px;
+  }
+
+  h2 {
+    font-size: clamp(1.4rem, 3.4vw, 1.75rem);
+    font-weight: 600;
+    line-height: 1.18;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0 0 14px;
+  }
+
+  h3 {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    margin: 28px 0 8px;
+  }
+
+  p { margin: 0 0 20px; }
+  p:last-child { margin-bottom: 0; }
+
+  a { color: var(--accent); text-underline-offset: 2px; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  strong { font-weight: 700; }
+
+  .kicker a { color: inherit; text-decoration: none; }
+  .kicker a:hover { text-decoration: underline; }
+
+  .kicker, .step {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 10px;
+  }
+
+  header.top { padding-block: 72px 0; }
+
+  .deck {
+    font-size: 1.3125rem;
+    line-height: 1.45;
+    color: var(--ink-soft);
+    max-width: 56ch;
+    margin: 0 0 26px;
+  }
+
+  .byline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    font-size: 0.875rem;
+    color: var(--ink-muted);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding-block: 13px;
+    margin-bottom: 22px;
+  }
+  .byline span { white-space: nowrap; }
+  .byline .dot { color: var(--rule); }
+
+  .note {
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: var(--ink-muted);
+    max-width: 64ch;
+    margin: 0 0 8px;
+  }
+
+  section { margin-top: 52px; }
+
+
+  /* ---------- grid figure ---------- */
+
+  figure.grids { margin: 30px 0; }
+
+  .grid-set {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--rule-soft);
+    border: 1px solid var(--rule-soft);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .grid-panel {
+    background: var(--surface);
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.35;
+    margin-bottom: 3px;
+    min-height: 2.7em;
+  }
+
+  .panel-sub {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6875rem;
+    color: var(--ink-muted);
+    margin-bottom: 12px;
+  }
+
+  .verdict {
+    margin-top: auto;
+    padding-top: 14px;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+  }
+  .verdict.ok { color: var(--on); }
+  .verdict.bad { color: var(--accent); }
+
+  table.mini { font-size: 0.8125rem; width: 100%; }
+  table.mini th, table.mini td { padding: 5px 10px 5px 0; white-space: nowrap; }
+  table.mini td.id { color: var(--ink-muted); }
+  table.mini td.pending { background: var(--on-wash); color: var(--ink); font-weight: 700; padding-left: 6px; }
+  table.mini td.wrong { background: var(--accent-wash); color: var(--accent); font-weight: 700; padding-left: 6px; }
+  table.mini .tag {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.625rem; font-weight: 400; color: var(--ink-muted); margin-left: 4px;
+  }
+
+  /* ---------- contents, folds, extras ---------- */
+
+  .toc {
+    margin: 26px 0 0;
+    padding: 14px 18px 12px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    max-width: 64ch;
+  }
+  .toc-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin: 0 0 8px;
+  }
+  .toc-list { list-style: none; margin: 0; padding: 0; font-size: 0.9375rem; line-height: 1.45; }
+  .toc-list li { margin: 0 0 5px; }
+  .toc-list a { display: flex; gap: 10px; color: var(--ink-soft); text-decoration: none; }
+  .toc-list a:hover { color: var(--accent); text-decoration: underline; }
+  .toc-list .n {
+    flex-shrink: 0;
+    width: 1.1em;
+    padding-top: 2px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+  }
+
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary::before {
+    content: "";
+    flex-shrink: 0;
+    width: 0; height: 0;
+    border-left: 5px solid currentColor;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    transition: transform 0.15s;
+  }
+  details[open] > summary::before { transform: rotate(90deg); }
+  summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  details.fold { margin: -8px 0 22px; }
+  details.fold > summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  details.fold .codewrap { margin: 10px 0 14px; }
+  .fold-link { font-size: 0.875rem; color: var(--ink-muted); margin: 0 0 6px; }
+  .fold-link a code { color: inherit; }
+  .repo-line { font-size: 1rem; color: var(--ink-soft); margin-top: 14px; }
+
+  .extras-intro { color: var(--ink-muted); font-size: 1rem; }
+  details.extra {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+  }
+  details.extra > summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    font-size: 1.0625rem;
+    font-weight: 700;
+  }
+  details.extra[open] > summary { border-bottom: 1px solid var(--rule-soft); }
+  .extra-body { padding: 16px 18px 18px; }
+  .extra-body .codewrap { margin: 18px 0; }
+
+  /* ---------- code ---------- */
+
+  .codewrap {
+    margin: 22px 0;
+    background: var(--code-bg);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  pre { margin: 0; padding: 15px 16px; overflow-x: auto; background: transparent; }
+  pre code {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.8125rem;
+    line-height: 1.64;
+    color: var(--ink);
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  p code, li code, td code, summary code, .rule-box code, .callout code {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.8125em;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  .hljs { color: var(--ink); background: transparent; }
+  .hljs-keyword, .hljs-built_in, .hljs-meta { color: var(--hl-key); }
+  .hljs-string { color: var(--hl-str); }
+  .hljs-number, .hljs-literal { color: var(--hl-num); }
+  .hljs-comment { color: var(--hl-com); font-style: italic; }
+  .hljs-title, .hljs-title.function_ { color: var(--hl-fn); }
+  .hljs-title.class_, .hljs-type, .hljs-attr, .hljs-property, .hljs-name, .hljs-tag { color: var(--hl-type); }
+  .hljs-params, .hljs-variable, .hljs-subst { color: var(--ink); }
+
+  /* ---------- table ---------- */
+
+  .tablewrap { overflow-x: auto; margin: 16px 0 22px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+  th, td {
+    text-align: left;
+    padding: 9px 16px 9px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    white-space: nowrap;
+  }
+  th {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--ink-muted);
+    font-weight: 700;
+    border-bottom: 1px solid var(--rule);
+  }
+  td { color: var(--ink-soft); }
+  td.half { color: var(--accent); font-weight: 700; }
+
+  /* ---------- callouts ---------- */
+
+  .rule-box {
+    margin: 26px 0;
+    padding: 18px 22px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    font-size: 1.0625rem;
+    line-height: 1.55;
+  }
+
+  .callout {
+    margin: 24px 0;
+    padding: 4px 0 4px 20px;
+    border-left: 3px solid var(--accent);
+    font-size: 1rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+  }
+  .callout .label {
+    display: block;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 5px;
+  }
+
+  .demo-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px 24px;
+    margin: 22px 0 0;
+    padding: 20px 22px;
+    background: var(--surface);
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+  }
+  .demo-card p { margin: 0; max-width: 46ch; font-size: 1rem; line-height: 1.5; color: var(--ink-soft); }
+  .demo-link {
+    display: inline-block;
+    font-weight: 700;
+    font-size: 0.9375rem;
+    color: var(--paper);
+    background: var(--ink);
+    text-decoration: none;
+    padding: 10px 18px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .demo-link:hover { background: var(--accent); }
+
+  ul.plain { padding-left: 22px; margin: 18px 0; }
+  ul.plain li { margin-bottom: 8px; }
+
+  @media (max-width: 700px) {
+    body { font-size: 1.0625rem; }
+    header.top { padding-block: 48px 0; }
+    section { margin-top: 40px; }
+    .grid-set { grid-template-columns: 1fr; }
+    .panel-title { min-height: 0; }
+    .verdict { margin-top: 12px; padding-top: 0; }
+    .deck { font-size: 1.1875rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <p class="kicker"><a href="../index.html">Bobby Filippopoulos</a></p>
+    <h1>How to Build an Editable Spreadsheet with Glide Data Grid</h1>
+    <p class="deck">
+      Track every edit by row ID, handle paste yourself, and save everything in one request.
+    </p>
+    <div class="byline">
+      <span>React + TypeScript</span>
+      <span class="dot">/</span>
+      <span>Glide Data Grid 6</span>
+      <span class="dot">/</span>
+      <span>9 min read</span>
+    </div>
+    <p class="note">
+      Based on an editor I built and shipped for a table of about 25,000 cells. The code is
+      simplified to show the pattern, and the companion demo runs the same functions.
+      Written with AI assistance.
+    </p>
+    <nav class="toc" aria-label="In this article">
+      <p class="toc-label">In this article</p>
+      <ol class="toc-list">
+        <li><a href="#why"><span class="n"></span>Why Glide Data Grid</a></li>
+        <li><a href="#step-1"><span class="n">1</span>Key everything by row ID</a></li>
+        <li><a href="#step-2"><span class="n">2</span>Keep the state in a reducer and share it with context</a></li>
+        <li><a href="#step-3"><span class="n">3</span>Record edits in a change map</a></li>
+        <li><a href="#step-4"><span class="n">4</span>Handle paste yourself</a></li>
+        <li><a href="#step-5"><span class="n">5</span>Add and remove columns</a></li>
+        <li><a href="#step-6"><span class="n">6</span>Filter rows without losing edits</a></li>
+        <li><a href="#step-7"><span class="n">7</span>Save in one request</a></li>
+        <li><a href="#changes"><span class="n"></span>What changed from the version I shipped</a></li>
+        <li><a href="#keyboard"><span class="n"></span>Extra: the keyboard inside a modal</a></li>
+      </ol>
+    </nav>
+  </header>
+
+  <section class="measure" id="why">
+    <h2>Why Glide Data Grid</h2>
+    <p>
+      The app let users create custom fields: extra columns of values for each record.
+      Changing a value meant downloading an Excel template, editing it offline, and uploading
+      it again. The task was to let users edit the values in place.
+    </p>
+    <p>
+      I first tried the grid library the app already used for its tables. It renders cells
+      as DOM elements, and at this size it was too slow. That led me to Glide Data Grid,
+      which draws cells on a canvas instead. The default view held about 25,000 cells.
+    </p>
+    <p>
+      Glide handles drawing, selection, keyboard movement, copy, and a cell editor. Everything
+      about what changed is yours to build:
+    </p>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Glide gives you</th><th>You build</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>getCellContent([col, row])</code></td><td>Where each cell's value comes from</td></tr>
+          <tr><td><code>onCellsEdited</code> with <code>[col, row]</code> locations</td><td>A record of which cells changed</td></tr>
+          <tr><td><code>onPaste(target, values)</code></td><td>Header rows, size limits</td></tr>
+          <tr><td>Header menu button</td><td>Column filters, adding and removing columns</td></tr>
+          <tr><td>Built-in search bar</td><td>A shortcut to open it inside a modal</td></tr>
+          <tr><td>Nothing</td><td>The save request</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="measure" id="step-1">
+    <p class="step">Step 1</p>
+    <h2>Key everything by row ID</h2>
+    <p>
+      Glide identifies a cell by its position: column index and row index on screen. Storing
+      edits the same way works until the rows move. A filter, a sort, or a new row changes
+      which row sits at each position, and an edit stored as "row 2" now points at a
+      different row.
+    </p>
+  </section>
+
+  <figure class="grids">
+    <div class="grid-set">
+      <div class="grid-panel">
+        <div class="panel-title">Edit stored by position, after filtering Status to rows with a value</div>
+        <div class="panel-sub">changes: { depth: { 2: "35" } }</div>
+        <table class="mini">
+          <thead><tr><th>Site</th><th>Depth</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td class="id">Site A</td><td>12</td><td>Active</td></tr>
+            <tr><td class="id">Site C</td><td>35</td><td>Active</td></tr>
+            <tr><td class="id">Site E</td><td class="wrong">18<span class="tag">row 2</span></td><td>Active</td></tr>
+            <tr><td class="id">Site F</td><td></td><td>Planned</td></tr>
+          </tbody>
+        </table>
+        <div class="verdict bad">Wrong</div>
+      </div>
+      <div class="grid-panel">
+        <div class="panel-title">Edit stored by row ID, after the same filter</div>
+        <div class="panel-sub">changes: { depth: { "Site C": "35" } }</div>
+        <table class="mini">
+          <thead><tr><th>Site</th><th>Depth</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td class="id">Site A</td><td>12</td><td>Active</td></tr>
+            <tr><td class="id">Site C</td><td class="pending">35</td><td>Active</td></tr>
+            <tr><td class="id">Site E</td><td>18</td><td>Active</td></tr>
+            <tr><td class="id">Site F</td><td></td><td>Planned</td></tr>
+          </tbody>
+        </table>
+        <div class="verdict ok">Correct</div>
+      </div>
+    </div>
+    <figcaption>
+      Site C's depth was set to 35 while it was the third row (row 2, counting from 0). The
+      filter hid Sites B, D and G. Stored by position, the pending change now points at
+      Site E, and saving would write 35 there. The last row, Site H, is not shown.
+    </figcaption>
+  </figure>
+
+  <section class="measure" style="margin-top: 0;">
+    <p>
+      Store values and edits by row ID instead, and keep the order on screen as a separate,
+      derived list, <code>visibleRowIds</code>. Row N on screen is
+      <code>visibleRowIds[N]</code>. Column 0 is the read-only ID column, and data column
+      <code>i</code> is grid column <code>i + 1</code>.
+    </p>
+    <div class="codewrap">
+<pre><code class="language-typescript">type ColumnT = {
+  id: string;
+  title: string;
+  values: Record&lt;string, string&gt;; // row ID -&gt; value
+  isNew?: boolean; // added in the editor, not saved yet
+};
+
+type GridEditorStateT = {
+  idColumnTitle: string;
+  rowIds: string[]; // every row, in order
+  columns: ColumnT[]; // current values
+  savedColumns: ColumnT[]; // values as last saved
+  changes: Map&lt;string, Map&lt;string, string&gt;&gt;; // column ID -&gt; row ID -&gt; new value
+  filters: Record&lt;string, "all" | "hasValue" | "noValue"&gt;;
+};</code></pre>
+    </div>
+    <details class="fold">
+      <summary>Full code: <code>getCellContent</code></summary>
+    <div class="codewrap">
+<pre><code class="language-typescript">const getCellContent = ([col, row]: Item): GridCell =&gt; {
+  const rowId = visibleRowIds[row] ?? "";
+
+  if (col === 0) {
+    return {
+      kind: GridCellKind.Text,
+      data: rowId,
+      displayData: rowId,
+      allowOverlay: false,
+      readonly: true
+    };
+  }
+
+  const column = columns[col - 1];
+  const value = column?.values[rowId] ?? "";
+  const isChanged = column ? changes.get(column.id)?.has(rowId) === true : false;
+
+  return {
+    kind: GridCellKind.Text,
+    data: value,
+    displayData: value,
+    allowOverlay: true,
+    // Canvas cannot read CSS variables, so this is a real colour value.
+    themeOverride: isChanged ? { bgCell: colors.changedCellBg } : undefined
+  };
+};</code></pre>
+    </div>
+      <p class="fold-link">In the repository: <a href="https://github.com/bflip12/glide-grid-bulk-editor/blob/main/src/hooks/grid-editor/useGlideGridProps.tsx" target="_blank" rel="noopener"><code>useGlideGridProps.tsx</code></a></p>
+    </details>
+  </section>
+
+  <section class="measure" id="step-2">
+    <p class="step">Step 2</p>
+    <h2>Keep the state in a reducer and share it with context</h2>
+    <p>
+      The grid, the toolbar, the change count, and the save button all read the same state.
+      A reducer keeps every change a pure function you can test without rendering a canvas,
+      and one context provider shares it.
+    </p>
+    <div class="codewrap">
+<pre><code class="language-typescript">type GridEditorActionT =
+  | { type: "load"; data: GridDataT }
+  | { type: "applyChanges"; changes: CellChangeT[] }
+  | { type: "addColumn"; title: string }
+  | { type: "removeColumn"; columnId: string }
+  | { type: "setFilter"; columnId: string; filter: ColumnFilterT }
+  | { type: "saved"; request: SaveRequestT };</code></pre>
+    </div>
+    <p>
+      The provider derives the visible rows, the change count, and the save request instead
+      of storing them, so they can never disagree with the data. Every component that reads
+      the context re-renders on each change. With four components and a grid that redraws on
+      a canvas anyway, that costs little. The version I shipped used Jotai atoms with the
+      same split: base atoms for the data and edits, derived atoms for everything else.
+    </p>
+    <details class="fold">
+      <summary>Full code: the provider</summary>
+    <div class="codewrap">
+<pre><code class="language-typescript">export const GridEditorProvider = ({ initialData, children }: GridEditorProviderPropsT) =&gt; {
+  const [state, dispatch] = useReducer(gridEditorReducer, initialData, createGridEditorState);
+
+  const visibleRowIds = useMemo(
+    () =&gt; getVisibleRowIds(state.rowIds, state.columns, state.filters),
+    [state.rowIds, state.columns, state.filters]
+  );
+
+  const value = useMemo(() =&gt; {
+    const changeCount = countChanges(state.changes);
+    return {
+      state,
+      dispatch,
+      visibleRowIds,
+      changeCount,
+      hasChanges: changeCount &gt; 0 || state.columns.some((column) =&gt; column.isNew),
+      saveRequest: buildSaveRequest(state.columns, state.changes)
+    };
+  }, [state, visibleRowIds]);
+
+  return &lt;GridEditorContext.Provider value={value}&gt;{children}&lt;/GridEditorContext.Provider&gt;;
+};</code></pre>
+    </div>
+      <p class="fold-link">In the repository: <a href="https://github.com/bflip12/glide-grid-bulk-editor/blob/main/src/hooks/grid-editor/GridEditorContext.tsx" target="_blank" rel="noopener"><code>GridEditorContext.tsx</code></a></p>
+    </details>
+  </section>
+
+  <section class="measure" id="step-3">
+    <p class="step">Step 3</p>
+    <h2>Record edits in a change map</h2>
+    <p>
+      The change map goes column ID, then row ID, then new value. Each changed cell has one
+      entry however often it is edited, and checking whether a cell changed is two
+      <code>Map</code> reads, which matters because <code>getCellContent</code> runs for every
+      visible cell when the grid draws. An edit that puts a cell back to its saved value
+      removes the entry, so the counter never reports a cell that matches the server.
+    </p>
+    <p>
+      Glide reports typed edits through <code>onCellsEdited</code> as locations and new
+      cells. Convert each location to a column ID and row ID, dispatch once, and return
+      <code>true</code> so Glide does not also call <code>onCellEdited</code> for each cell.
+    </p>
+    <div class="codewrap">
+<pre><code class="language-typescript">const onCellsEdited = (edits: readonly EditListItem[]) =&gt; {
+  const cellChanges: CellChangeT[] = [];
+
+  for (const { location, value } of edits) {
+    const [col, row] = location;
+    const column = columns[col - 1];
+    const rowId = visibleRowIds[row];
+    if (col === 0 || !column || rowId === undefined) continue;
+    if (value.kind !== GridCellKind.Text) continue;
+    cellChanges.push({ columnId: column.id, rowId, value: value.data });
+  }
+
+  dispatch({ type: "applyChanges", changes: cellChanges });
+  return true;
+};</code></pre>
+    </div>
+    <details class="fold">
+      <summary>Full code: <code>addChangesToMap</code> and the reducer case</summary>
+    <div class="codewrap">
+<pre><code class="language-typescript">export const addChangesToMap = (
+  current: ChangeMapT,
+  changes: CellChangeT[],
+  savedColumns: ColumnT[]
+): ChangeMapT =&gt; {
+  const next = new Map(current);
+  const copied = new Set&lt;string&gt;();
+  const savedById = new Map(savedColumns.map((column) =&gt; [column.id, column.values]));
+
+  for (const { columnId, rowId, value } of changes) {
+    // Copy each inner map once per call, not once per cell.
+    if (!copied.has(columnId)) {
+      next.set(columnId, new Map(next.get(columnId)));
+      copied.add(columnId);
+    }
+    const columnChanges = next.get(columnId)!;
+    const savedValue = savedById.get(columnId)?.[rowId] ?? "";
+
+    if (value === savedValue) columnChanges.delete(rowId);
+    else columnChanges.set(rowId, value);
+  }
+
+  // Drop columns left with no changes.
+  copied.forEach((columnId) =&gt; {
+    if (next.get(columnId)?.size === 0) next.delete(columnId);
+  });
+
+  return next;
+};</code></pre>
+    </div>
+    <div class="codewrap">
+<pre><code class="language-typescript">case "applyChanges": {
+  if (action.changes.length === 0) return state;
+
+  const byColumn = new Map&lt;string, Record&lt;string, string&gt;&gt;();
+  for (const { columnId, rowId, value } of action.changes) {
+    if (!byColumn.has(columnId)) byColumn.set(columnId, {});
+    byColumn.get(columnId)![rowId] = value;
+  }
+
+  const columns = state.columns.map((column) =&gt; {
+    const updates = byColumn.get(column.id);
+    return updates ? { ...column, values: { ...column.values, ...updates } } : column;
+  });
+
+  return {
+    ...state,
+    columns,
+    changes: addChangesToMap(state.changes, action.changes, state.savedColumns)
+  };
+}</code></pre>
+    </div>
+      <p class="fold-link">In the repository: <a href="https://github.com/bflip12/glide-grid-bulk-editor/blob/main/src/hooks/grid-editor/utils/addChangesToMap.ts" target="_blank" rel="noopener"><code>addChangesToMap.ts</code></a>, <a href="https://github.com/bflip12/glide-grid-bulk-editor/blob/main/src/hooks/grid-editor/gridEditorReducer.ts" target="_blank" rel="noopener"><code>gridEditorReducer.ts</code></a></p>
+    </details>
+  </section>
+
+  <section class="measure" id="step-4">
+    <p class="step">Step 4</p>
+    <h2>Handle paste yourself</h2>
+    <p>
+      Glide's <code>onPaste</code> receives the target cell and the pasted text as rows of
+      strings. Return <code>true</code> and Glide writes the values through
+      <code>onCellsEdited</code>, skipping read-only cells. Return <code>false</code> and the
+      paste is yours. I handle it for two things Glide cannot know: whether the first row is
+      a header, and whether the paste is too large to save.
+    </p>
+    <div class="codewrap">
+<pre><code class="language-typescript">const onPaste = (target: Item, values: readonly (readonly string[])[]) =&gt; {
+  const { changes, isHeaderRowSkipped } = getPasteChanges({
+    target,
+    values,
+    visibleRowIds,
+    idColumnTitle,
+    columns
+  });
+  if (changes.length === 0) return false;
+
+  const bytes = estimatePayloadBytes(changes); // UTF-8 length of the JSON
+  if (bytes &gt; maxPayloadBytes) {
+    onPasteRejected(`This paste is ${formatMegabytes(bytes)}, over the limit.`);
+    return false;
+  }
+
+  dispatch({ type: "applyChanges", changes });
+  if (isHeaderRowSkipped) onHeaderRowSkipped();
+  return false; // already applied, so Glide must not apply it again
+};</code></pre>
+    </div>
+    <h3>Skip a pasted header row</h3>
+    <p>
+      A whole column copied from a spreadsheet starts with its header cell. Paste it with the
+      grid's column header selected and Glide starts at row 0, so the header lands in the
+      first row as data. Glide's own copy leaves headers out unless <code>copyHeaders</code>
+      is on, so the header row only comes from other sources. <code>isHeaderRow</code>
+      compares the first pasted row with the titles of the columns it lands on, and only runs
+      when the paste starts at the top row and has more than one row.
+    </p>
+    <h3>Map the paste to row IDs</h3>
+    <p>
+      <code>getPasteChanges</code> puts each pasted row on the next <em>visible</em> row, so a
+      paste into a filtered grid writes to the rows the user can see. Values that land on the
+      ID column are dropped without shifting the rest, and anything past the last row or
+      column is dropped. The server in the app accepted requests up to 50 MB, so the paste is
+      measured before anything changes.
+    </p>
+    <details class="fold">
+      <summary>Full code: <code>getPasteChanges</code> and <code>isHeaderRow</code></summary>
+    <div class="codewrap">
+<pre><code class="language-typescript">export const getPasteChanges = ({
+  target,
+  values,
+  visibleRowIds,
+  idColumnTitle,
+  columns
+}: GetPasteChangesParamsT): GetPasteChangesReturnT =&gt; {
+  const [targetCol, targetRow] = target;
+  const gridTitles = [idColumnTitle, ...columns.map((column) =&gt; column.title)];
+
+  const isHeaderRowSkipped =
+    targetRow === 0 &amp;&amp; values.length &gt; 1 &amp;&amp; isHeaderRow(values[0], gridTitles, targetCol);
+  const firstDataRow = isHeaderRowSkipped ? 1 : 0;
+
+  const changes: CellChangeT[] = [];
+
+  for (let pasteRow = firstDataRow; pasteRow &lt; values.length; pasteRow++) {
+    const rowId = visibleRowIds[targetRow + pasteRow - firstDataRow];
+    if (rowId === undefined) break;
+
+    values[pasteRow].forEach((value, offset) =&gt; {
+      const gridCol = targetCol + offset;
+      if (gridCol === 0) return; // read-only ID column
+
+      const column = columns[gridCol - 1];
+      if (!column) return;
+
+      changes.push({ columnId: column.id, rowId, value });
+    });
+  }
+
+  return { changes, isHeaderRowSkipped };
+};</code></pre>
+    </div>
+    <div class="codewrap">
+<pre><code class="language-typescript">const normalize = (text: string) =&gt; text.trim().toLowerCase();
+
+export const isHeaderRow = (
+  row: readonly string[],
+  gridTitles: string[],
+  startColumn: number
+): boolean =&gt; {
+  let matched = 0;
+
+  for (let offset = 0; offset &lt; row.length; offset++) {
+    const cell = normalize(row[offset] ?? "");
+    if (cell === "") continue;
+
+    const title = gridTitles[startColumn + offset];
+    if (title === undefined || normalize(title) !== cell) return false;
+    matched += 1;
+  }
+
+  return matched &gt; 0;
+};</code></pre>
+    </div>
+      <p class="fold-link">In the repository: <a href="https://github.com/bflip12/glide-grid-bulk-editor/blob/main/src/hooks/grid-editor/utils/getPasteChanges.ts" target="_blank" rel="noopener"><code>getPasteChanges.ts</code></a>, <a href="https://github.com/bflip12/glide-grid-bulk-editor/blob/main/src/hooks/grid-editor/utils/isHeaderRow.ts" target="_blank" rel="noopener"><code>isHeaderRow.ts</code></a></p>
+    </details>
+    <p>
+      Glide reads pasted data with <code>navigator.clipboard.read()</code> when the browser
+      provides it, which needs clipboard permission. Where that is blocked, such as some
+      embedded frames, the paste fails before it reaches <code>onPaste</code>.
+    </p>
+  </section>
+
+  <section class="measure" id="step-5">
+    <p class="step">Step 5</p>
+    <h2>Add and remove columns</h2>
+    <p>
+      A new column goes into the state straight away, marked <code>isNew</code>, and is
+      created on the server with the next save. Its title cannot be empty after trimming and
+      cannot match an existing column. The comparison is case-sensitive, as it was in the
+      shipped version. Lowercase both sides if your backend treats "Depth" and "depth" as the
+      same.
+    </p>
+    <div class="codewrap">
+<pre><code class="language-typescript">export const validateColumnTitle = (title: string, columns: ColumnT[]): ColumnTitleValidationT =&gt; {
+  const trimmed = title.trim();
+
+  if (trimmed === "") return { isValid: false, error: "Column name is required" };
+  if (columns.some((column) =&gt; column.title === trimmed)) {
+    return { isValid: false, error: `Column "${trimmed}" already exists` };
+  }
+
+  return { isValid: true };
+};</code></pre>
+    </div>
+    <p>
+      Only unsaved columns can be removed. Removing one also removes its pending edits and
+      its filter, so the next save never sends cells for a column that no longer exists.
+    </p>
+    <details class="fold">
+      <summary>Full code: the <code>addColumn</code> and <code>removeColumn</code> cases</summary>
+    <div class="codewrap">
+<pre><code class="language-typescript">case "addColumn": {
+  const title = action.title.trim();
+  const column = { id: `new:${title}`, title, values: {}, isNew: true };
+  return { ...state, columns: [...state.columns, column] };
+}
+
+case "removeColumn": {
+  const column = state.columns.find((c) =&gt; c.id === action.columnId);
+  if (!column?.isNew) return state;
+
+  const changes = new Map(state.changes);
+  changes.delete(action.columnId);
+  const { [action.columnId]: _removed, ...filters } = state.filters;
+
+  return {
+    ...state,
+    columns: state.columns.filter((c) =&gt; c.id !== action.columnId),
+    changes,
+    filters
+  };
+}</code></pre>
+    </div>
+      <p class="fold-link">In the repository: <a href="https://github.com/bflip12/glide-grid-bulk-editor/blob/main/src/hooks/grid-editor/gridEditorReducer.ts" target="_blank" rel="noopener"><code>gridEditorReducer.ts</code></a></p>
+    </details>
+  </section>
+
+  <section class="measure" id="step-6">
+    <p class="step">Step 6</p>
+    <h2>Filter rows without losing edits</h2>
+    <p>
+      Each column's header menu offers three filters: all rows, rows with a value, and rows
+      without one. The visible rows are derived from the filters and the current values.
+      Edits never refer to positions, so filtering cannot move them.
+    </p>
+    <div class="codewrap">
+<pre><code class="language-typescript">const hasValue = (value: string | undefined) =&gt; value !== undefined &amp;&amp; value !== "";
+
+export const getVisibleRowIds = (
+  rowIds: RowIdT[],
+  columns: ColumnT[],
+  filters: Record&lt;string, ColumnFilterT&gt;
+): RowIdT[] =&gt; {
+  const active = columns.filter((column) =&gt; (filters[column.id] ?? "all") !== "all");
+  if (active.length === 0) return rowIds; // same array, so memoised readers do not redraw
+
+  return rowIds.filter((rowId) =&gt;
+    active.every((column) =&gt;
+      filters[column.id] === "hasValue"
+        ? hasValue(column.values[rowId])
+        : !hasValue(column.values[rowId])
+    )
+  );
+};</code></pre>
+    </div>
+    <p>
+      Because the filter reads current values, filling in a cell under "rows without a value"
+      removes that row from view as soon as the edit is applied. The edit stays recorded
+      against its row ID, and the row returns when the filter is cleared.
+    </p>
+  </section>
+
+  <section class="measure" id="step-7">
+    <p class="step">Step 7</p>
+    <h2>Save in one request</h2>
+    <p>
+      The request lists the columns to create and every changed cell. Cells in new columns
+      are ordinary entries in the change map, so each cell appears once. The request is
+      size-checked again before it is sent, since many small edits add up, and pending
+      changes are cleared only after the server accepts them.
+    </p>
+    <div class="codewrap">
+<pre><code class="language-typescript">const save = async () =&gt; {
+  const bytes = estimatePayloadBytes(saveRequest);
+  if (bytes &gt; maxPayloadBytes) {
+    setError(`These changes are ${formatMegabytes(bytes)}. Save in smaller batches.`);
+    return false;
+  }
+
+  try {
+    await onSave(saveRequest);
+    dispatch({ type: "saved", request: saveRequest });
+    return true;
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Failed to save changes");
+    return false;
+  }
+};</code></pre>
+    </div>
+    <details class="fold">
+      <summary>Full code: <code>buildSaveRequest</code></summary>
+    <div class="codewrap">
+<pre><code class="language-typescript">export const buildSaveRequest = (columns: ColumnT[], changes: ChangeMapT): SaveRequestT =&gt; {
+  const newColumns = columns
+    .filter((column) =&gt; column.isNew)
+    .map(({ id, title }) =&gt; ({ id, title }));
+
+  const updates: SaveRequestT["updates"] = [];
+  changes.forEach((rows, columnId) =&gt; {
+    rows.forEach((value, rowId) =&gt; updates.push({ columnId, rowId, value }));
+  });
+
+  return { newColumns, updates };
+};</code></pre>
+    </div>
+      <p class="fold-link">In the repository: <a href="https://github.com/bflip12/glide-grid-bulk-editor/blob/main/src/hooks/grid-editor/utils/buildSaveRequest.ts" target="_blank" rel="noopener"><code>buildSaveRequest.ts</code></a></p>
+    </details>
+  </section>
+
+  <section class="measure" id="changes">
+    <h2>What changed from the version I shipped</h2>
+    <p>
+      The demo and the code repository follow the shipped design, with two differences. The
+      state lives in a reducer and context instead of Jotai atoms, and changed cells are
+      highlighted, where the shipped version highlighted new columns only.
+    </p>
+    <p>
+      Each reducer case and pure function has its own tests, which is what keeping the logic
+      out of the components is for. The shipped editor had about 150 unit tests. The
+      reference repository has 68, and the demo was checked in a real browser for typing,
+      pasting, filtering, search, and the Escape order.
+    </p>
+  </section>
+
+  <section class="measure">
+    <h2>Try it</h2>
+    <div class="demo-card">
+      <p>
+        The demo runs real Glide Data Grid 6.0.3. A five-step walkthrough stores an edit by
+        position, filters the grid, and shows the edit pointing at the wrong row, then
+        replays it with row IDs. A 1,000-site dataset (25,000 cells) is included.
+      </p>
+      <a class="demo-link" href="demo.html" target="_blank" rel="noopener">Open the demo</a>
+    </div>
+    <p class="repo-line">
+      The code is on GitHub as a small React and TypeScript project with 68 tests:
+      <a href="https://github.com/bflip12/glide-grid-bulk-editor" target="_blank" rel="noopener">bflip12/glide-grid-bulk-editor</a>.
+    </p>
+  </section>
+
+  <section class="measure">
+    <h2>Summary</h2>
+    <div class="rule-box">
+      <strong>Key every edit by row ID.</strong> Row positions change whenever the view
+      changes. Row IDs do not.
+    </div>
+    <ul class="plain">
+      <li>Store values and edits by row ID; derive the visible row order.</li>
+      <li>Keep one change map entry per cell, and drop edits that match the saved value.</li>
+      <li>Handle paste yourself to skip header rows and check the size first.</li>
+      <li>Remove a column's pending edits when the column is removed.</li>
+      <li>Save everything in one request, and clear only what the server accepted.</li>
+    </ul>
+  </section>
+
+  <section class="measure" id="extras">
+    <h2>Extras</h2>
+    <p class="extras-intro">Side topics from the same editor. The pattern above does not depend on them.</p>
+    <details class="extra" id="keyboard">
+      <summary>Handle the keyboard inside a modal</summary>
+      <div class="extra-body">
+        <p>
+          The editor opened in a modal. Two keys needed care there.
+        </p>
+        <p>
+          <strong>Ctrl+F</strong> (Cmd+F on macOS) opens the browser's find bar, which cannot
+          search text drawn on a canvas. Glide has its own search bar, controlled by the
+          <code>showSearch</code> prop. Its built-in shortcut is off by default and only works
+          while the grid has focus, so I listen on the document and open the grid's search
+          instead.
+        </p>
+        <p>
+          <strong>Escape</strong> can mean several things: close the search, leave the cell
+          editor, clear the selection, or close the modal. One handler decides in that order and
+          does only the first one that applies. It listens in the capture phase on
+          <code>document</code>, so it runs before the grid or the modal sees the key.
+        </p>
+        <div class="codewrap">
+<pre><code class="language-typescript">const handleKeyDown = (event: KeyboardEvent) =&gt; {
+  if ((event.ctrlKey || event.metaKey) &amp;&amp; event.key.toLowerCase() === "f") {
+    event.preventDefault();
+    setIsSearchOpen(true);
+    return;
+  }
+  if (event.key !== "Escape") return;
+
+  const current = latest.current; // refs, so the listener is attached once
+  const stop = () =&gt; {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  if (current.isSearchOpen) {
+    stop();
+    setIsSearchOpen(false);
+    return;
+  }
+
+  // Glide renders the cell editor into #portal. Let the grid close it.
+  const portal = document.getElementById("portal");
+  if (portal &amp;&amp; event.target instanceof Node &amp;&amp; portal.contains(event.target)) return;
+
+  if (current.hasSelection) {
+    stop();
+    current.onClearSelection();
+    return;
+  }
+
+  if (current.onEscapeWhenIdle) {
+    stop();
+    current.onEscapeWhenIdle(); // asks to close, with a prompt if there are unsaved changes
+  }
+};
+
+document.addEventListener("keydown", handleKeyDown, true);</code></pre>
+        </div>
+        <p>
+          Disable the handler while something above the grid owns the keyboard, such as the
+          "discard changes?" prompt or a column menu. Otherwise Escape on the prompt reaches the
+          grid first.
+        </p>
+        <p class="fold-link">In the repository: <a href="https://github.com/bflip12/glide-grid-bulk-editor/blob/main/src/hooks/grid-editor/useGridKeyboard.tsx" target="_blank" rel="noopener"><code>useGridKeyboard.tsx</code></a></p>
+      </div>
+    </details>
+  </section>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+  (function () {
+    if (window.hljs) {
+      document.querySelectorAll("pre code").forEach(function (el) {
+        window.hljs.highlightElement(el);
+      });
+    }
+
+    // A jump link to a folded section opens it.
+    function openTarget(hash) {
+      var el = hash && document.getElementById(hash.slice(1));
+      if (el && el.tagName === "DETAILS") el.open = true;
+    }
+    openTarget(location.hash);
+    window.addEventListener("hashchange", function () { openTarget(location.hash); });
+    document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+      a.addEventListener("click", function () { openTarget(a.getAttribute("href")); });
+    });
+  })();
+</script>
+
+</body>
+</html>

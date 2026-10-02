@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bobby Filippopoulos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+  /* Shared design tokens for every portfolio page.
+     Injected by shared/build.py wherever a page source contains the TOKENS placeholder.
+     Change a value here, then rebuild every piece (see docs/pieces.md). */
+
+  :root {
+    /* grounds */
+    --paper: #FCFBF9;        /* page background */
+    --surface: #FFFFFF;      /* panels, cards, figures */
+    --sunk: #F4F2EF;         /* recessed: chips, toggle tracks */
+    --code-bg: #F4F2EF;      /* code blocks and inline code */
+    --hover: #F3F0EC;
+
+    /* ink */
+    --ink: #171514;
+    --ink-soft: #423D39;
+    --ink-muted: #6E6862;
+    --btn-ink: #FCFBF9;      /* text on --ink buttons */
+
+    /* rules */
+    --rule: #DFDAD3;
+    --rule-soft: #ECE8E2;
+    --rule-strong: #CFC9C1;
+
+    /* meaning */
+    --accent: #9E2A2B;       /* brand accent, also "wrong" / half-checked */
+    --accent-wash: #F7E9E7;
+    --on: #2F6B4F;           /* "correct" / checked */
+    --on-wash: #E4EFE8;
+
+    /* library look-alikes */
+    --antd-blue: #1890FF;
+    --cb-border: #BDB6AE;
+    --hit: #FCE7A6;          /* search match highlight */
+
+    /* code highlighting */
+    --hl-key: #8A2C6B;
+    --hl-str: #2F6B4F;
+    --hl-num: #9C5410;
+    --hl-com: #8A837B;
+    --hl-fn: #2B5490;
+    --hl-type: #9E2A2B;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --paper: #131211;
+      --surface: #1B1917;
+      --sunk: #1E1C1A;
+      --code-bg: #1E1C1A;
+      --hover: #25221F;
+      --ink: #EDE9E4;
+      --ink-soft: #C6BFB7;
+      --ink-muted: #948C83;
+      --btn-ink: #131211;
+      --rule: #302C29;
+      --rule-soft: #24211E;
+      --rule-strong: #45403B;
+      --accent: #E4837F;
+      --accent-wash: #3A1E1D;
+      --on: #7FC29B;
+      --on-wash: #1B2E24;
+      --antd-blue: #3C9AE8;
+      --cb-border: #5E5852;
+      --hit: #5A4715;
+      --hl-key: #DD9BC8;
+      --hl-str: #90CDA9;
+      --hl-num: #E5A76C;
+      --hl-com: #7E766E;
+      --hl-fn: #93B4E8;
+      --hl-type: #E4837F;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --paper: #131211;
+    --surface: #1B1917;
+    --sunk: #1E1C1A;
+    --code-bg: #1E1C1A;
+    --hover: #25221F;
+    --ink: #EDE9E4;
+    --ink-soft: #C6BFB7;
+    --ink-muted: #948C83;
+    --btn-ink: #131211;
+    --rule: #302C29;
+    --rule-soft: #24211E;
+    --rule-strong: #45403B;
+    --accent: #E4837F;
+    --accent-wash: #3A1E1D;
+    --on: #7FC29B;
+    --on-wash: #1B2E24;
+    --antd-blue: #3C9AE8;
+    --cb-border: #5E5852;
+    --hit: #5A4715;
+    --hl-key: #DD9BC8;
+    --hl-str: #90CDA9;
+    --hl-num: #E5A76C;
+    --hl-com: #7E766E;
+    --hl-fn: #93B4E8;
+    --hl-type: #E4837F;
+  }
+
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Source Sans 3", -apple-system, "Segoe UI", sans-serif;
+    font-size: 1.125rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 76ch;
+    margin: 0 auto;
+    padding-inline: 24px;
+    padding-block: 88px 72px;
+  }
+
+  a { color: var(--accent); text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+  /* ---------- intro ---------- */
+
+  .kicker {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 12px;
+  }
+
+  h1 {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: clamp(2.6rem, 8vw, 4rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin: 0 0 26px;
+  }
+
+  .about {
+    font-size: 1.3125rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: 58ch;
+    margin: 0 0 28px;
+  }
+
+  .contact {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 22px;
+    padding-block: 14px;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    font-size: 0.9375rem;
+  }
+  .contact a { font-weight: 600; text-decoration: none; }
+  .contact a:hover { text-decoration: underline; }
+  .contact .email {
+    margin-left: auto;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.8125rem;
+    color: var(--ink-muted);
+    user-select: all;
+  }
+
+  /* ---------- work ---------- */
+
+  h2 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin: 64px 0 18px;
+  }
+
+  .pieces { display: flex; flex-direction: column; gap: 18px; }
+
+  .piece {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 22px 24px 20px;
+  }
+  .piece-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 10px;
+  }
+  .tag {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6875rem;
+    color: var(--ink-soft);
+    background: var(--sunk);
+    border-radius: 3px;
+    padding: 2px 7px;
+  }
+  .piece h3 {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: clamp(1.3rem, 3.2vw, 1.6rem);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.012em;
+    text-wrap: balance;
+    margin: 0 0 8px;
+  }
+  .piece h3 a { color: var(--ink); text-decoration: none; }
+  .piece h3 a:hover { color: var(--accent); }
+  .piece p { margin: 0 0 16px; font-size: 1rem; line-height: 1.55; color: var(--ink-soft); max-width: 62ch; }
+  .piece-links { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; font-size: 0.9375rem; }
+  .piece-links a { font-weight: 600; }
+  .piece-links .primary {
+    color: var(--btn-ink);
+    background: var(--ink);
+    text-decoration: none;
+    padding: 7px 14px;
+    border-radius: 3px;
+  }
+  .piece-links .primary:hover { background: var(--accent); }
+  .piece-links .read { margin-left: auto; font-size: 0.8125rem; color: var(--ink-muted); }
+
+  footer {
+    margin-top: 56px;
+    font-size: 0.8125rem;
+    color: var(--ink-muted);
+  }
+
+  @media (max-width: 620px) {
+    .wrap { padding-block: 56px 48px; padding-inline: 18px; }
+    .about { font-size: 1.1875rem; }
+    .contact .email { margin-left: 0; flex-basis: 100%; }
+    .piece { padding: 18px 18px 16px; }
+    .piece-links .read { margin-left: 0; flex-basis: 100%; }
+  }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="kicker">Portfolio</p>
+    <h1>Bobby Filippopoulos</h1>
+    <p class="about">
+      Frontend developer. Six years of React and TypeScript, mostly spent making
+      complicated interfaces feel simple. I care about the details users never see: state
+      that stays correct, interactions that hold up at scale, code the next person can read.
+      Each piece below is a feature I shipped, rebuilt with a write-up, a demo and the code.
+      I go where the interesting work is, in a new domain or a new stack.
+    </p>
+    <nav class="contact" aria-label="Contact">
+      <a href="https://github.com/bflip12" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://www.linkedin.com/in/bobbyfilip" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="Bobby_Filippopoulos_Resume.pdf" target="_blank" rel="noopener">Resume (PDF)</a>
+      <a href="mailto:filippopoulosbobby@gmail.com">Email</a>
+      <span class="email">filippopoulosbobby@gmail.com</span>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Work</h2>
+    <div class="pieces">
+      <article class="piece">
+        <div class="piece-meta"><span class="tag">React</span><span class="tag">TypeScript</span><span class="tag">Glide Data Grid</span></div>
+        <h3><a href="glide-grid-editor/index.html">How to Build an Editable Spreadsheet with Glide Data Grid</a></h3>
+        <p>An editable spreadsheet for about 25,000 cells: edits tracked by row ID so filters cannot move them, paste handled in one place, and every change saved in one request.</p>
+        <div class="piece-links"><a class="primary" href="glide-grid-editor/index.html">Read the article</a><a href="glide-grid-editor/demo.html">Try the demo</a><a href="https://github.com/bflip12/glide-grid-bulk-editor" target="_blank" rel="noopener">View the code</a><span class="read">9 min read</span></div>
+      </article>
+      <article class="piece">
+        <div class="piece-meta"><span class="tag">React</span><span class="tag">TypeScript</span><span class="tag">Ant Design</span></div>
+        <h3><a href="searchable-tree/index.html">How to Search an Ant Design Tree Without Breaking Its Checkboxes</a></h3>
+        <p>Filtering an Ant Design tree breaks its checkbox cascade. How to keep the selection correct while the user searches, on a tree of about 1,200 nodes.</p>
+        <div class="piece-links"><a class="primary" href="searchable-tree/index.html">Read the article</a><a href="searchable-tree/demo.html">Try the demo</a><a href="https://github.com/bflip12/antd-searchable-tree" target="_blank" rel="noopener">View the code</a><span class="read">6 min read</span></div>
+      </article>
+    </div>
+  </main>
+
+  <footer>Bobby Filippopoulos</footer>
+
+</div>
+
+</body>
+</html>

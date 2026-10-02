@@ -1,0 +1,1091 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How to Search an Ant Design Tree Without Breaking Its Checkboxes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+<style>
+  /* Shared design tokens for every portfolio page.
+     Injected by shared/build.py wherever a page source contains the TOKENS placeholder.
+     Change a value here, then rebuild every piece (see docs/pieces.md). */
+
+  :root {
+    /* grounds */
+    --paper: #FCFBF9;        /* page background */
+    --surface: #FFFFFF;      /* panels, cards, figures */
+    --sunk: #F4F2EF;         /* recessed: chips, toggle tracks */
+    --code-bg: #F4F2EF;      /* code blocks and inline code */
+    --hover: #F3F0EC;
+
+    /* ink */
+    --ink: #171514;
+    --ink-soft: #423D39;
+    --ink-muted: #6E6862;
+    --btn-ink: #FCFBF9;      /* text on --ink buttons */
+
+    /* rules */
+    --rule: #DFDAD3;
+    --rule-soft: #ECE8E2;
+    --rule-strong: #CFC9C1;
+
+    /* meaning */
+    --accent: #9E2A2B;       /* brand accent, also "wrong" / half-checked */
+    --accent-wash: #F7E9E7;
+    --on: #2F6B4F;           /* "correct" / checked */
+    --on-wash: #E4EFE8;
+
+    /* library look-alikes */
+    --antd-blue: #1890FF;
+    --cb-border: #BDB6AE;
+    --hit: #FCE7A6;          /* search match highlight */
+
+    /* code highlighting */
+    --hl-key: #8A2C6B;
+    --hl-str: #2F6B4F;
+    --hl-num: #9C5410;
+    --hl-com: #8A837B;
+    --hl-fn: #2B5490;
+    --hl-type: #9E2A2B;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --paper: #131211;
+      --surface: #1B1917;
+      --sunk: #1E1C1A;
+      --code-bg: #1E1C1A;
+      --hover: #25221F;
+      --ink: #EDE9E4;
+      --ink-soft: #C6BFB7;
+      --ink-muted: #948C83;
+      --btn-ink: #131211;
+      --rule: #302C29;
+      --rule-soft: #24211E;
+      --rule-strong: #45403B;
+      --accent: #E4837F;
+      --accent-wash: #3A1E1D;
+      --on: #7FC29B;
+      --on-wash: #1B2E24;
+      --antd-blue: #3C9AE8;
+      --cb-border: #5E5852;
+      --hit: #5A4715;
+      --hl-key: #DD9BC8;
+      --hl-str: #90CDA9;
+      --hl-num: #E5A76C;
+      --hl-com: #7E766E;
+      --hl-fn: #93B4E8;
+      --hl-type: #E4837F;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --paper: #131211;
+    --surface: #1B1917;
+    --sunk: #1E1C1A;
+    --code-bg: #1E1C1A;
+    --hover: #25221F;
+    --ink: #EDE9E4;
+    --ink-soft: #C6BFB7;
+    --ink-muted: #948C83;
+    --btn-ink: #131211;
+    --rule: #302C29;
+    --rule-soft: #24211E;
+    --rule-strong: #45403B;
+    --accent: #E4837F;
+    --accent-wash: #3A1E1D;
+    --on: #7FC29B;
+    --on-wash: #1B2E24;
+    --antd-blue: #3C9AE8;
+    --cb-border: #5E5852;
+    --hit: #5A4715;
+    --hl-key: #DD9BC8;
+    --hl-str: #90CDA9;
+    --hl-num: #E5A76C;
+    --hl-com: #7E766E;
+    --hl-fn: #93B4E8;
+    --hl-type: #E4837F;
+  }
+
+
+  :root { --measure: 68ch; }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Source Sans 3", -apple-system, "Segoe UI", sans-serif;
+    font-size: 1.125rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 76ch;
+    margin: 0 auto;
+    padding-inline: 24px;
+    padding-block: 0 96px;
+  }
+
+  .measure { max-width: var(--measure); }
+
+  h1, h2 { font-family: "Fraunces", Georgia, serif; }
+
+  h1 {
+    font-size: clamp(2.1rem, 5.6vw, 3rem);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+    margin: 0 0 18px;
+  }
+
+  h2 {
+    font-size: clamp(1.4rem, 3.4vw, 1.75rem);
+    font-weight: 600;
+    line-height: 1.18;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0 0 14px;
+  }
+
+  h3 {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    margin: 28px 0 8px;
+  }
+
+  p { margin: 0 0 20px; }
+  p:last-child { margin-bottom: 0; }
+
+  a { color: var(--accent); text-underline-offset: 2px; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  strong { font-weight: 700; }
+
+  .kicker a { color: inherit; text-decoration: none; }
+  .kicker a:hover { text-decoration: underline; }
+
+  .kicker, .step {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 10px;
+  }
+
+  header.top { padding-block: 72px 0; }
+
+  .deck {
+    font-size: 1.3125rem;
+    line-height: 1.45;
+    color: var(--ink-soft);
+    max-width: 56ch;
+    margin: 0 0 26px;
+  }
+
+  .byline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    font-size: 0.875rem;
+    color: var(--ink-muted);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding-block: 13px;
+    margin-bottom: 22px;
+  }
+  .byline span { white-space: nowrap; }
+  .byline .dot { color: var(--rule); }
+
+  .note {
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: var(--ink-muted);
+    max-width: 64ch;
+    margin: 0 0 8px;
+  }
+
+  section { margin-top: 52px; }
+
+  /* ---------- tree figure ---------- */
+
+  figure.trees { margin: 30px 0; }
+
+  .tree-set {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--rule-soft);
+    border: 1px solid var(--rule-soft);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .tree-panel {
+    background: var(--surface);
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.35;
+    margin-bottom: 3px;
+    min-height: 4.05em;
+  }
+
+  .panel-sub {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6875rem;
+    color: var(--ink-muted);
+    margin-bottom: 14px;
+  }
+
+  .verdict {
+    margin-top: auto;
+    padding-top: 14px;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+  }
+  .verdict.ok { color: var(--on); }
+  .verdict.bad { color: var(--accent); }
+
+  .tree { font-size: 0.875rem; line-height: 2; }
+  .tree .row { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+  .tree .row.d1 { padding-left: 17px; }
+  .tree .row.d2 { padding-left: 34px; }
+  .tree .row.d3 { padding-left: 51px; }
+  .tree .more {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6875rem;
+    color: var(--ink-muted);
+    padding-left: 34px;
+  }
+  .tree-set.two { grid-template-columns: repeat(2, 1fr); }
+  .tree .row.ghost { opacity: 0.4; }
+
+  .caret { color: var(--ink-muted); font-size: 0.5625rem; width: 8px; display: inline-block; }
+
+  .cb {
+    width: 13px; height: 13px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    line-height: 1;
+    color: var(--surface);
+    border: 1.5px solid var(--ink-muted);
+  }
+  .cb.on { background: var(--on); border-color: var(--on); }
+  .cb.half { border-color: var(--accent); }
+  .cb.half::after {
+    content: "";
+    width: 7px; height: 2px;
+    background: var(--accent);
+    border-radius: 1px;
+  }
+
+  .tree .name { color: var(--ink-soft); }
+  .tree .row.match .name {
+    color: var(--ink); font-weight: 700;
+    background: var(--accent-wash); padding: 0 4px; border-radius: 2px;
+  }
+  .tree .tag {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.625rem; color: var(--ink-muted); margin-left: 3px;
+  }
+
+  figcaption {
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: var(--ink-muted);
+    margin-top: 14px;
+  }
+
+  /* ---------- code ---------- */
+
+  .codewrap {
+    margin: 22px 0;
+    background: var(--code-bg);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  pre { margin: 0; padding: 15px 16px; overflow-x: auto; background: transparent; }
+  pre code {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.8125rem;
+    line-height: 1.64;
+    color: var(--ink);
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  p code, li code, td code, .rule-box code, .fmt-option code, .callout code {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.8125em;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  .hljs { color: var(--ink); background: transparent; }
+  .hljs-keyword, .hljs-built_in, .hljs-meta { color: var(--hl-key); }
+  .hljs-string { color: var(--hl-str); }
+  .hljs-number, .hljs-literal { color: var(--hl-num); }
+  .hljs-comment { color: var(--hl-com); font-style: italic; }
+  .hljs-title, .hljs-title.function_ { color: var(--hl-fn); }
+  .hljs-title.class_, .hljs-type, .hljs-attr, .hljs-property, .hljs-name, .hljs-tag { color: var(--hl-type); }
+  .hljs-params, .hljs-variable, .hljs-subst { color: var(--ink); }
+
+  /* ---------- storage format switch ---------- */
+
+  .fmt-choice {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 24px 0;
+  }
+
+  .fmt-option {
+    display: block;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    background: var(--surface);
+    border: 1.5px solid var(--rule);
+    border-radius: 4px;
+    padding: 14px 16px 15px;
+    cursor: pointer;
+  }
+  .fmt-option:hover { border-color: var(--ink-muted); }
+  .fmt-option[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: var(--accent-wash);
+  }
+  .fmt-option .fmt-name {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+  .fmt-option .radio {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 1.5px solid var(--ink-muted);
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .fmt-option[aria-pressed="true"] .radio { border-color: var(--accent); }
+  .fmt-option[aria-pressed="true"] .radio::after {
+    content: "";
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .fmt-option .fmt-desc {
+    display: block;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    color: var(--ink-soft);
+  }
+
+  .tabs {
+    display: flex;
+    gap: 2px;
+    padding: 6px 8px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .tab {
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--ink-muted);
+    background: transparent;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    padding: 6px 10px 7px;
+    margin-bottom: -1px;
+    cursor: pointer;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+
+  body:not(.fmt-leaves) .only-leaves { display: none; }
+  body.fmt-leaves .only-antd { display: none; }
+
+  /* ---------- table ---------- */
+
+  .tablewrap { overflow-x: auto; margin: 16px 0 22px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+  th, td {
+    text-align: left;
+    padding: 9px 16px 9px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    white-space: nowrap;
+  }
+  th {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--ink-muted);
+    font-weight: 700;
+    border-bottom: 1px solid var(--rule);
+  }
+  td { color: var(--ink-soft); }
+  td.half { color: var(--accent); font-weight: 700; }
+
+  /* ---------- callouts ---------- */
+
+  .rule-box {
+    margin: 26px 0;
+    padding: 18px 22px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    font-size: 1.0625rem;
+    line-height: 1.55;
+  }
+
+  .callout {
+    margin: 24px 0;
+    padding: 4px 0 4px 20px;
+    border-left: 3px solid var(--accent);
+    font-size: 1rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+  }
+  .callout .label {
+    display: block;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 5px;
+  }
+
+  .demo-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px 24px;
+    margin: 22px 0 0;
+    padding: 20px 22px;
+    background: var(--surface);
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+  }
+  .demo-card p { margin: 0; max-width: 46ch; font-size: 1rem; line-height: 1.5; color: var(--ink-soft); }
+  .demo-link {
+    display: inline-block;
+    font-weight: 700;
+    font-size: 0.9375rem;
+    color: var(--paper);
+    background: var(--ink);
+    text-decoration: none;
+    padding: 10px 18px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .demo-link:hover { background: var(--accent); }
+  .repo-line { font-size: 1rem; color: var(--ink-soft); margin-top: 14px; }
+
+  ul.plain { padding-left: 22px; margin: 18px 0; }
+  ul.plain li { margin-bottom: 8px; }
+
+  @media (max-width: 700px) {
+    body { font-size: 1.0625rem; }
+    header.top { padding-block: 48px 0; }
+    section { margin-top: 40px; }
+    .tree-set { grid-template-columns: 1fr; }
+    .panel-title { min-height: 0; }
+    .verdict { margin-top: 12px; padding-top: 0; }
+    .deck { font-size: 1.1875rem; }
+    .fmt-choice { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <p class="kicker"><a href="../index.html">Bobby Filippopoulos</a></p>
+    <h1>How to Search an Ant Design Tree Without Breaking Its Checkboxes</h1>
+    <p class="deck">
+      Filtering hides nodes that the checkbox cascade still needs. Here is how to keep
+      the selection correct while the user searches.
+    </p>
+    <div class="byline">
+      <span>React + TypeScript</span>
+      <span class="dot">/</span>
+      <span>Ant Design 4</span>
+      <span class="dot">/</span>
+      <span>6 min read</span>
+    </div>
+    <p class="note">
+      Based on a feature I built and shipped for a tree of about 1,200 nodes. The code
+      is simplified to show the pattern, and the companion demo runs the same functions.
+      Written with AI assistance.
+    </p>
+  </header>
+
+  <section class="measure">
+    <h2>Why filter the tree</h2>
+    <p>
+      Ant Design's own searchable Tree example highlights matching titles and expands the
+      folders above them. Every node stays in the tree. That works when the tree is small
+      enough to scan.
+    </p>
+    <p>
+      It works less well at scale. The tree I built this for held about 1,200 layers in
+      nested folders. Highlighting left all 1,200 rows in place, with the matches spread
+      across expanded folders the user still had to scroll through. Filtering shows only the
+      matches and the folders that lead to them.
+    </p>
+  </section>
+
+  <figure class="trees">
+    <div class="tree-set two">
+      <div class="tree-panel">
+        <div class="panel-title">Searching "site b" by highlighting, as in antd's example</div>
+        <div class="panel-sub">28 rows</div>
+        <div class="tree">
+          <div class="row"><span class="caret">&#9662;</span><span class="name">Regions</span></div>
+          <div class="row d1"><span class="caret">&#9662;</span><span class="name">North</span></div>
+          <div class="row d2"><span class="caret"></span><span class="name">Site A</span></div>
+          <div class="row d2 match"><span class="caret"></span><span class="name">Site B</span></div>
+          <div class="row d2"><span class="caret">&#9662;</span><span class="name">Harbor District</span></div>
+          <div class="row d3"><span class="caret"></span><span class="name">Site C</span></div>
+          <div class="row d3"><span class="caret"></span><span class="name">Site D</span></div>
+          <div class="row d1"><span class="caret">&#9662;</span><span class="name">South</span></div>
+          <div class="row d2"><span class="caret"></span><span class="name">Site E</span></div>
+          <div class="row d2"><span class="caret"></span><span class="name">Site F</span></div>
+          <div class="more">+ 18 more rows</div>
+        </div>
+      </div>
+      <div class="tree-panel">
+        <div class="panel-title">Searching "site b" by filtering</div>
+        <div class="panel-sub">3 rows</div>
+        <div class="tree">
+          <div class="row"><span class="caret">&#9662;</span><span class="name">Regions</span></div>
+          <div class="row d1"><span class="caret">&#9662;</span><span class="name">North</span></div>
+          <div class="row d2 match"><span class="caret"></span><span class="name">Site B</span></div>
+        </div>
+      </div>
+    </div>
+    <figcaption>
+      The same search on the demo's sample tree of 19 sites in 9 folders. In a tree of about
+      1,200 layers, the highlighted version stays over 1,200 rows long.
+    </figcaption>
+  </figure>
+
+  <section class="measure" style="margin-top: 0;">
+    <p>
+      The other reason is what users do next. Search is usually the first half of a
+      selection: find the items, then check them. antd's searchable example is not
+      checkable, so it never has to decide what a folder's checkbox should show when some of
+      its children are hidden. A filtered, checkable tree does, and that is where the problem
+      starts.
+    </p>
+  </section>
+
+  <section class="measure">
+    <h2>The problem</h2>
+    <p>
+      Ant Design's <code>Tree</code> comes with a checkbox cascade. Check every child and
+      the parent checks itself. Check some and the parent shows half-checked.
+    </p>
+    <p>
+      Add search by filtering <code>treeData</code>, and the cascade starts working from
+      the filtered tree. A folder's state is computed only from the children still in
+      <code>treeData</code>. Whatever the search hid stops counting.
+    </p>
+    <p>
+      The display is only half of it. antd drops any checked key that is not in the
+      current <code>treeData</code>, so the next click reports a selection built from the
+      visible nodes alone. Hidden selections are missing from it, and a folder whose
+      visible children are all checked comes back as a checked folder. If your
+      <code>onCheck</code> stores what it receives, one click during a search can remove
+      items the user cannot see, or add them.
+    </p>
+  </section>
+
+  <figure class="trees">
+    <div class="tree-set">
+      <div class="tree-panel">
+        <div class="panel-title">No search</div>
+        <div class="panel-sub">checkStrictly: false</div>
+        <div class="tree">
+          <div class="row"><span class="caret">&#9662;</span><span class="cb half"></span><span class="name">Regions</span></div>
+          <div class="row d1"><span class="caret">&#9662;</span><span class="cb half"></span><span class="name">North</span></div>
+          <div class="row d2"><span class="caret"></span><span class="cb on">&#10003;</span><span class="name">Site A</span></div>
+          <div class="row d2"><span class="caret"></span><span class="cb"></span><span class="name">Site B</span></div>
+        </div>
+        <div class="verdict ok">Correct</div>
+      </div>
+      <div class="tree-panel">
+        <div class="panel-title">Searching "site b", library computes the checkboxes</div>
+        <div class="panel-sub">checkStrictly: false</div>
+        <div class="tree">
+          <div class="row"><span class="caret">&#9662;</span><span class="cb"></span><span class="name">Regions</span></div>
+          <div class="row d1"><span class="caret">&#9662;</span><span class="cb"></span><span class="name">North</span></div>
+          <div class="row d2 ghost"><span class="caret"></span><span class="cb on">&#10003;</span><span class="name">Site A</span><span class="tag">filtered out</span></div>
+          <div class="row d2 match"><span class="caret"></span><span class="cb"></span><span class="name">Site B</span></div>
+        </div>
+        <div class="verdict bad">Wrong</div>
+      </div>
+      <div class="tree-panel">
+        <div class="panel-title">Searching "site b", we compute the checkboxes from the full tree</div>
+        <div class="panel-sub">checkStrictly: true</div>
+        <div class="tree">
+          <div class="row"><span class="caret">&#9662;</span><span class="cb half"></span><span class="name">Regions</span></div>
+          <div class="row d1"><span class="caret">&#9662;</span><span class="cb half"></span><span class="name">North</span></div>
+          <div class="row d2 ghost"><span class="caret"></span><span class="cb on">&#10003;</span><span class="name">Site A</span><span class="tag">filtered out</span></div>
+          <div class="row d2 match"><span class="caret"></span><span class="cb"></span><span class="name">Site B</span></div>
+        </div>
+        <div class="verdict ok">Correct</div>
+      </div>
+    </div>
+    <figcaption>
+      Site A is selected, and the search for "site b" hides it. In the middle panel the
+      library can no longer see it, so both folders report nothing selected. The first
+      and third panels agree: filtering should change what is displayed, not the answer.
+    </figcaption>
+  </figure>
+
+  <section class="measure" style="margin-top: 0;">
+    <p>
+      The fix has two halves. <strong>Rendering reads from the full tree</strong>, so
+      hidden nodes still count. <strong>Clicks write only to the visible tree</strong>, so
+      they never change what the user cannot see. The steps below build both.
+    </p>
+  </section>
+
+  <section class="measure" id="step-1">
+    <p class="step">Step 1</p>
+    <h2>Decide how you store checked keys</h2>
+    <p>
+      Everything below starts from one piece of state: the keys the user has checked.
+      There are two reasonable shapes for it, and the code differs in a few places
+      depending on which you have. Pick yours and the rest of the article follows it.
+    </p>
+    <div class="fmt-choice" role="group" aria-label="How you store checked keys">
+      <button type="button" class="fmt-option" id="fmt-antd" data-fmt="antd" aria-pressed="true">
+        <span class="fmt-name"><span class="radio"></span>antd format</span>
+        <span class="fmt-desc">Leaves plus any folder whose children are all checked. If you pass <code>onCheck</code>'s keys straight into state, this is what you have.</span>
+      </button>
+      <button type="button" class="fmt-option" id="fmt-leaves" data-fmt="leaves" aria-pressed="false">
+        <span class="fmt-name"><span class="radio"></span>Leaves only</span>
+        <span class="fmt-desc">Only checked leaf keys. Folder state is always derived and never stored. Simpler if you are starting fresh.</span>
+      </button>
+    </div>
+
+    <div class="codewrap">
+      <div class="tabs" role="tablist" aria-label="Storage format">
+        <button type="button" class="tab" role="tab" data-fmt="antd">antd format</button>
+        <button type="button" class="tab" role="tab" data-fmt="leaves">Leaves only</button>
+      </div>
+<pre class="only-antd"><code class="language-typescript">type TreeNode = { key: string; title: string; children?: TreeNode[] };
+
+// Leaves plus fully checked folders, exactly as onCheck returns them.
+const [checkedKeys, setCheckedKeys] = useState&lt;string[]&gt;([]);</code></pre>
+<pre class="only-leaves"><code class="language-typescript">type TreeNode = { key: string; title: string; children?: TreeNode[] };
+
+// Leaf keys only. Folder state is always derived.
+const [checkedKeys, setCheckedKeys] = useState&lt;string[]&gt;([]);
+
+const collectLeafKeys = (nodes: TreeNode[], out = new Set&lt;string&gt;()) =&gt; {
+  for (const node of nodes) {
+    if (node.children?.length) collectLeafKeys(node.children, out);
+    else out.add(node.key);
+  }
+  return out;
+};
+
+const leafKeys = useMemo(() =&gt; collectLeafKeys(fullTree), [fullTree]);</code></pre>
+    </div>
+    <p class="only-antd">
+      The app I built this for already stored antd's format, so it needed the extra sync
+      step at the end of Step 5.
+    </p>
+  </section>
+
+  <section class="measure">
+    <p class="step">Step 2</p>
+    <h2>Filter the tree</h2>
+    <p>
+      A plain filter keeps nodes whose title matches, which breaks on folders: search a
+      folder's name and you get the folder with none of its contents. So a matching
+      folder keeps all its children.
+    </p>
+    <p>
+      Expanding is a separate decision. Open the folders on the path to a match, but
+      leave a matching folder itself closed, or its whole contents push the other results
+      off screen.
+    </p>
+    <div class="codewrap">
+<pre><code class="language-typescript">const filterTree = (nodes: TreeNode[], query: string, expanded: Set&lt;string&gt;): TreeNode[] =&gt; {
+  const result: TreeNode[] = [];
+
+  for (const node of nodes) {
+    const matches = node.title.toLowerCase().includes(query);
+
+    if (node.children?.length) {
+      if (matches) {
+        // A matching folder keeps everything inside it.
+        result.push(node);
+        continue;
+      }
+      const children = filterTree(node.children, query, expanded);
+      if (children.length) {
+        // Something inside matched, so open this folder to show it.
+        expanded.add(node.key);
+        result.push({ ...node, children });
+      }
+    } else if (matches) {
+      result.push(node);
+    }
+  }
+
+  return result;
+};</code></pre>
+    </div>
+    <p>
+      Because a matching folder brings its children along, not every visible row matches
+      the query. That is intended.
+    </p>
+  </section>
+
+  <section class="measure">
+    <p class="step">Step 3</p>
+    <h2>Turn on checkStrictly while searching</h2>
+    <p>
+      <code>checkStrictly</code> turns off antd's cascade. antd then renders exactly the
+      checked and half-checked keys you pass it. Switch it on only while a search is
+      active. Without a search, the cascade is correct and costs you nothing.
+    </p>
+    <div class="codewrap">
+<pre><code class="language-typescript">const isSearching = query.trim().length &gt; 0;
+
+&lt;Tree
+  checkable
+  checkStrictly={isSearching}
+  treeData={isSearching ? search.tree : fullTree}
+  checkedKeys={isSearching ? searchCheckState : checkedKeys}
+  onCheck={handleCheck}
+  expandedKeys={expandedKeys}
+  onExpand={(keys) =&gt; setExpandedKeys(keys as string[])}
+/&gt;</code></pre>
+    </div>
+    <p>
+      In strict mode <code>checkedKeys</code> takes an object,
+      <code>{ checked, halfChecked }</code>, instead of an array. The next step builds it.
+    </p>
+  </section>
+
+  <section class="measure">
+    <p class="step">Step 4</p>
+    <h2>Compute checkbox state from the full tree</h2>
+    <p>
+      While searching, you supply both lists yourself. Walk the <strong>full</strong> tree,
+      not the filtered one, and count the leaves under each folder. All selected means
+      checked, some means half-checked, none means unchecked.
+    </p>
+    <div class="codewrap">
+<pre><code class="language-typescript">type CheckState = { checked: string[]; halfChecked: string[] };
+
+// Walks the full tree, so leaves hidden by the search still count.
+const deriveCheckState = (nodes: TreeNode[], selected: Set&lt;string&gt;, out: CheckState) =&gt; {
+  let total = 0;
+  let picked = 0;
+
+  for (const node of nodes) {
+    if (!node.children?.length) {
+      total += 1;
+      if (selected.has(node.key)) {
+        picked += 1;
+        out.checked.push(node.key);
+      }
+      continue;
+    }
+
+    const sub = deriveCheckState(node.children, selected, out);
+    if (sub.total &gt; 0 &amp;&amp; sub.picked === sub.total) out.checked.push(node.key);
+    else if (sub.picked &gt; 0) out.halfChecked.push(node.key);
+
+    total += sub.total;
+    picked += sub.picked;
+  }
+
+  return { total, picked };
+};
+
+const searchCheckState = useMemo(() =&gt; {
+  const out: CheckState = { checked: [], halfChecked: [] };
+  deriveCheckState(fullTree, new Set(checkedKeys), out);
+  return out;
+}, [fullTree, checkedKeys]);</code></pre>
+    </div>
+    <p>
+      It reads leaf keys only, so it works with either storage format. Folder keys in the
+      list are ignored.
+    </p>
+    <p>Traced against the example, with Site A selected and a search for "site b":</p>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Node</th><th>Leaves under it</th><th>Selected</th><th>Renders as</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>North</td><td>2</td><td>1</td><td class="half">half-checked</td></tr>
+          <tr><td>Regions</td><td>2</td><td>1</td><td class="half">half-checked</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      Site A is hidden by the search but still counted, which is why both folders render
+      half-checked.
+    </p>
+  </section>
+
+  <section class="measure">
+    <p class="step">Step 5</p>
+    <h2>Apply clicks only to what is visible</h2>
+    <p>
+      In strict mode, <code>onCheck</code> no longer works anything out for you. It hands
+      you the clicked node and you update the state yourself. That node comes from the
+      filtered tree, so its children are only the ones the user can see. Recursing from it
+      cannot reach hidden nodes.
+    </p>
+    <div class="codewrap">
+<pre><code class="language-typescript">const allLeavesChecked = (node: TreeNode, selected: Set&lt;string&gt;): boolean =&gt;
+  node.children?.length
+    ? node.children.every((child) =&gt; allLeavesChecked(child, selected))
+    : selected.has(node.key);
+
+const applyToggle = (node: TreeNode, add: boolean, selected: Set&lt;string&gt;) =&gt; {
+  if (node.children?.length) {
+    node.children.forEach((child) =&gt; applyToggle(child, add, selected));
+  } else if (add) {
+    selected.add(node.key);
+  } else {
+    selected.delete(node.key);
+  }
+};</code></pre>
+    </div>
+    <p>
+      Do not use <code>info.checked</code> to decide the direction. For a half-checked
+      folder it reports <code>true</code> even when every visible child is already checked,
+      so the click appears to do nothing. Decide from the visible leaves instead: if they
+      are all checked, uncheck them, otherwise check them. One rule covers leaves, folders,
+      and half-checked folders.
+    </p>
+    <div class="codewrap">
+      <div class="tabs" role="tablist" aria-label="Storage format">
+        <button type="button" class="tab" role="tab" data-fmt="antd">antd format</button>
+        <button type="button" class="tab" role="tab" data-fmt="leaves">Leaves only</button>
+      </div>
+<pre class="only-antd"><code class="language-typescript">const handleCheck: TreeProps["onCheck"] = (keys, info) =&gt; {
+  if (!isSearching) {
+    // No search: antd's cascade is correct, so store what it returns.
+    setCheckedKeys(keys as string[]);
+    return;
+  }
+
+  const next = new Set(checkedKeys);
+  const node = info.node as TreeNode; // from the filtered tree
+
+  applyToggle(node, !allLeavesChecked(node, next), next);
+  syncFolderKeys(fullTree, next); // keep antd's format valid
+
+  setCheckedKeys([...next]);
+};</code></pre>
+<pre class="only-leaves"><code class="language-typescript">const handleCheck: TreeProps["onCheck"] = (keys, info) =&gt; {
+  if (!isSearching) {
+    // No search: antd's cascade is correct. Keep only the leaves it returns.
+    setCheckedKeys((keys as string[]).filter((key) =&gt; leafKeys.has(key)));
+    return;
+  }
+
+  const next = new Set(checkedKeys);
+  const node = info.node as TreeNode; // from the filtered tree
+
+  applyToggle(node, !allLeavesChecked(node, next), next);
+
+  setCheckedKeys([...next]);
+};</code></pre>
+    </div>
+
+    <div class="only-antd">
+      <h3>Keep folder keys in sync</h3>
+      <p>
+        antd's format promises that a folder key is present exactly when every leaf under
+        it is checked. A toggle during search changes leaves only, so walk the full tree
+        afterwards and add or remove folder keys to match.
+      </p>
+      <div class="codewrap">
+<pre><code class="language-typescript">// Returns whether every leaf under `nodes` is selected.
+const syncFolderKeys = (nodes: TreeNode[], selected: Set&lt;string&gt;): boolean =&gt; {
+  let allSelected = true;
+
+  for (const node of nodes) {
+    if (node.children?.length) {
+      const full = syncFolderKeys(node.children, selected);
+      if (full) selected.add(node.key);
+      else selected.delete(node.key);
+      allSelected = allSelected &amp;&amp; full;
+    } else {
+      allSelected = allSelected &amp;&amp; selected.has(node.key);
+    }
+  }
+
+  return allSelected;
+};</code></pre>
+      </div>
+      <div class="callout">
+        <span class="label">Why this step matters</span>
+        Skip it and the damage shows up when the search clears. Say North stays in the
+        list after one of its sites is unchecked. The tree goes back to cascade mode, reads
+        North as checked, and checks every site under it, including ones the user never
+        picked.
+      </div>
+    </div>
+    <p class="only-leaves">
+      With leaves only there is nothing else to update. Folder keys are never stored, so
+      none can go out of date.
+    </p>
+  </section>
+
+  <section class="measure">
+    <h2>Debounce the filter, not the input</h2>
+    <p>
+      Rebuilding a large tree on every keystroke makes typing lag. Debouncing the input's
+      value fixes that but makes the text field itself feel slow. Keep the input immediate
+      and debounce only the query that drives the filter.
+    </p>
+    <div class="codewrap">
+<pre><code class="language-typescript">const [inputValue, setInputValue] = useState("");
+const [query, setQuery] = useState("");
+
+// Created once. A new debounced function on every render
+// would reset the timer on every keystroke.
+const updateQuery = useMemo(() =&gt; debounce(setQuery, 250), []);
+useEffect(() =&gt; () =&gt; updateQuery.cancel(), [updateQuery]);
+
+const search = useMemo(() =&gt; {
+  const expanded = new Set&lt;string&gt;();
+  const tree = filterTree(fullTree, query.trim().toLowerCase(), expanded);
+  return { tree, expandedKeys: [...expanded] };
+}, [fullTree, query]);
+
+&lt;Input
+  value={inputValue}
+  onChange={(e) =&gt; {
+    setInputValue(e.target.value); // the input stays responsive
+    updateQuery(e.target.value);   // the filter waits
+  }}
+/&gt;</code></pre>
+    </div>
+    <p>
+      Because the filtered tree is derived from state, anything that changes
+      <code>fullTree</code>, such as a rename elsewhere in the app, re-runs the current
+      search on its own. Seed <code>expandedKeys</code> from <code>search.expandedKeys</code>
+      whenever the query changes, so the user can still open and close folders in the
+      results.
+    </p>
+  </section>
+
+  <section class="measure">
+    <h2>Try it</h2>
+    <div class="demo-card">
+      <p>
+        The demo runs real Ant Design 4.24.16. A five-step walkthrough shows a search
+        breaking the checkboxes under antd's default behaviour, then replays the same clicks
+        with the fix. A 1,000-site dataset is included.
+      </p>
+      <a class="demo-link" href="demo.html" target="_blank" rel="noopener">Open the demo</a>
+    </div>
+    <p class="repo-line">
+      The code is on GitHub as a small React and TypeScript project with 27 tests:
+      <a href="https://github.com/bflip12/antd-searchable-tree" target="_blank" rel="noopener">bflip12/antd-searchable-tree</a>.
+    </p>
+  </section>
+
+  <section class="measure">
+    <h2>Summary</h2>
+    <div class="rule-box">
+      <strong>Read from the full tree, write to the visible one.</strong> What renders has
+      to account for the nodes the filter hid. What a click changes must not.
+    </div>
+    <ul class="plain">
+      <li>Filter the tree, keeping matching folders whole.</li>
+      <li>Turn on <code>checkStrictly</code> only while searching.</li>
+      <li>Derive checked and half-checked states from the full tree.</li>
+      <li>Apply each click to the visible children of the clicked node.</li>
+      <li class="only-antd">If you store antd's format, sync folder keys after every change.</li>
+    </ul>
+  </section>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+  (function () {
+    if (window.hljs) {
+      document.querySelectorAll("pre code").forEach(function (el) {
+        window.hljs.highlightElement(el);
+      });
+    }
+
+    var KEY = "tree-article-format";
+
+    function setFormat(fmt, remember) {
+      document.body.classList.toggle("fmt-leaves", fmt === "leaves");
+      document.querySelectorAll(".fmt-option").forEach(function (b) {
+        b.setAttribute("aria-pressed", String(b.dataset.fmt === fmt));
+      });
+      document.querySelectorAll(".tab").forEach(function (t) {
+        t.setAttribute("aria-selected", String(t.dataset.fmt === fmt));
+      });
+      if (remember) {
+        try { localStorage.setItem(KEY, fmt); } catch (e) {}
+      }
+    }
+
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    setFormat(saved === "leaves" ? "leaves" : "antd", false);
+
+    document.querySelectorAll(".fmt-option, .tab").forEach(function (el) {
+      el.addEventListener("click", function () { setFormat(el.dataset.fmt, true); });
+    });
+  })();
+</script>
+
+</body>
+</html>
